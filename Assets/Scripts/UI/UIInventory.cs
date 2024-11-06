@@ -40,6 +40,11 @@ public class UIInventory : MonoBehaviour
         controller.inventory += Toggle;
         CharacterManager.Instance.Player.addItem += AddItem;
         
+        Initialize();
+    }
+
+    void Initialize()
+    {
         inventoryWindow.SetActive(false);
         slots = new ItemSlot[slotPanel.childCount];
 
@@ -51,12 +56,6 @@ public class UIInventory : MonoBehaviour
         }
         
         ClearSelectedItemWindow();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     void ClearSelectedItemWindow()

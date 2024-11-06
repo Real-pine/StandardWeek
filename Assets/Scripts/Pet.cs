@@ -1,65 +1,51 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
-public enum AIState
+
+public class Pet : MonoBehaviour
 {
-    Idle,
-    Wandering,
-    Attacking
-}
-public class NPC : MonoBehaviour, IDamageable
-{
-    [Header("Stats")] 
-    public int health;
+    [Header("Stat")] 
     public float walkSpeed;
     public float runSpeed;
-    public ItemData[] dropOnDeath;
     
     [Header("AI")]
     private NavMeshAgent agent;
     public float detectDistance;
     private AIState aiState;
-
-    [Header("Wandering")] 
-    public float minWanderDstance;
-    public float maxWanderDstance;
+    
+    [Header("Wandering")]
+    public float minWanderDistance;
+    public float maxWanderDistance;
     public float minWanderWaitTime;
     public float maxWanderWaitTime;
-
+    
     [Header("Combat")] 
     public int damage;
     public float attackRate;
     private float lastAttackTime;
     public float attackDistance;
     private float playerDistance;
-
-    public float fieldOfView = 120;
-
-    private Animator animator;
-
-    private SkinnedMeshRenderer[] meshRenderers;
-
-
-    void Awake()
+    
+    public float fieldOfView;
+    
+    private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
-        meshRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
     }
-    void Start()
+
+    private void Start()
     {
         SetState(AIState.Wandering);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         playerDistance = Vector3.Distance(transform.position, CharacterManager.Instance.Player.transform.position);
-        
-        animator.SetBool("Moving", aiState != AIState.Idle);
 
         switch (aiState)
         {
@@ -68,12 +54,12 @@ public class NPC : MonoBehaviour, IDamageable
                 PassiveUpdate();
                 break;
             case AIState.Attacking:
-                AttackingUpdate();
+                FollowUpdate();
                 break;
         }
     }
-
-    public void SetState(AIState state)
+    
+    private void SetState(AIState state)
     {
         aiState = state;
 
@@ -92,16 +78,14 @@ public class NPC : MonoBehaviour, IDamageable
                 agent.isStopped = false;
                 break;
         }
-
-        animator.speed = agent.speed / walkSpeed;
     }
 
-    void PassiveUpdate()
+    private void PassiveUpdate()
     {
-        if (aiState == AIState.Wandering && agent.remainingDistance < 0.1f)
+        if (aiState == AIState.Wandering && agent.remainingDistance <= 0.1f)
         {
             SetState(AIState.Idle);
-            Invoke("WanderToNewLocation", Random.Range(minWanderWaitTime, maxWanderWaitTime));
+            Invoke("WanderToNewLocation", UnityEngine.Random.Range(minWanderWaitTime, maxWanderWaitTime));
         }
 
         if (playerDistance < detectDistance)
@@ -110,29 +94,28 @@ public class NPC : MonoBehaviour, IDamageable
         }
     }
 
-    void WanderToNewLocation()
+    private void WanderToNewLocation()
     {
-        if(aiState != AIState.Idle) return;
+        if (aiState != AIState.Idle) return;
         
         SetState(AIState.Wandering);
         agent.SetDestination(GetWonderLocation());
     }
 
-    Vector3 GetWonderLocation()
+    private Vector3 GetWonderLocation()
     {
         NavMeshHit hit;
 
         NavMesh.SamplePosition(
-            transform.position + (Random.onUnitSphere * Random.Range(minWanderDstance, maxWanderDstance)), out hit,
-            maxWanderDstance, NavMesh.AllAreas);
-
+            transform.position + (Random.onUnitSphere * Random.Range(minWanderDistance, maxWanderDistance)), out hit,
+            maxWanderDistance, NavMesh.AllAreas);
         int i = 0;
 
         while (Vector3.Distance(transform.position, hit.position) < detectDistance)
         {
             NavMesh.SamplePosition(
-                transform.position + (Random.onUnitSphere * Random.Range(minWanderDstance, maxWanderDstance)), out hit,
-                maxWanderDstance, NavMesh.AllAreas);
+                transform.position + (Random.onUnitSphere * Random.Range(minWanderDistance, maxWanderDistance)), out hit,
+                maxWanderDistance, NavMesh.AllAreas);
             i++;
             if (i == 30) break;
         }
@@ -140,7 +123,7 @@ public class NPC : MonoBehaviour, IDamageable
         return hit.position;
     }
 
-    void AttackingUpdate()
+    private void FollowUpdate()
     {
         if (playerDistance < attackDistance && IsPlayerInFieldOfView())
         {
@@ -148,9 +131,7 @@ public class NPC : MonoBehaviour, IDamageable
             if (Time.time - lastAttackTime > attackRate)
             {
                 lastAttackTime = Time.time;
-                CharacterManager.Instance.Player.controller.GetComponent<IDamageable>().TakePhysicalDamage(damage);
-                animator.speed = 1;
-                animator.SetTrigger("Attack");
+                CharacterManager.Instance.Player.condition.uiCondition.stamina.curValue += damage;
             }
         }
         else
@@ -167,58 +148,19 @@ public class NPC : MonoBehaviour, IDamageable
                 {
                     agent.SetDestination(transform.position);
                     agent.isStopped = true;
-                    SetState((AIState.Wandering));
+                    SetState(AIState.Wandering);
                 }
-            }
-            else
-            {
-                agent.SetDestination(transform.position);
-                agent.isStopped = true;
-                SetState(AIState.Wandering);
-            }
+            }    
         }
+        
     }
 
-    bool IsPlayerInFieldOfView()
+    private bool IsPlayerInFieldOfView()
     {
         Vector3 directionToPlayer = CharacterManager.Instance.Player.transform.position - transform.position;
         float angle = Vector3.Angle(transform.forward, directionToPlayer);
         return angle < fieldOfView * 0.5f;
-    }
-
-    public void TakePhysicalDamage(int damage)
-    {
-        health -= damage;
-        if (health <= 0)
-        {
-            // death
-        }
         
-        // ?°ë?ì§€ ?¨ê³¼
-        StartCoroutine(DamageFlash());
-    }
-
-    void Die()
-    {
-        for (int i = 0; i < dropOnDeath.Length; i++)
-        {
-            Instantiate(dropOnDeath[i].dropPrefab, transform.position + Vector3.up*2, Quaternion.identity);
-        }
-        Destroy(gameObject);
-    }
-
-    IEnumerator DamageFlash()
-    {
-        for (int i = 0; i < meshRenderers.Length; i++)
-        {
-            meshRenderers[i].material.color = new Color(1.0f, 0.6f, 0.6f);
-        }
         
-        yield return new WaitForSeconds(0.1f);
-
-        for (int i = 0; i < meshRenderers.Length; i++)
-        {
-            meshRenderers[i].material.color = Color.white;
-        }
     }
 }
