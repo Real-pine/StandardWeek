@@ -21,7 +21,7 @@ public class NPC : MonoBehaviour, IDamageable
     [Header("AI")]
     private NavMeshAgent agent;
     public float detectDistance;
-    private AIState aiState;
+    public AIState aiState;
 
     [Header("Wandering")] 
     public float minWanderDstance;
@@ -38,15 +38,18 @@ public class NPC : MonoBehaviour, IDamageable
 
     public float fieldOfView = 120;
 
-    private Animator animator;
+    public Animator animator;
 
     private SkinnedMeshRenderer[] meshRenderers;
+
+    private NPC_AttackSounds attackSounds;
 
 
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        attackSounds = GetComponent<NPC_AttackSounds>();
         meshRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
     }
     void Start()
@@ -151,6 +154,7 @@ public class NPC : MonoBehaviour, IDamageable
                 CharacterManager.Instance.Player.controller.GetComponent<IDamageable>().TakePhysicalDamage(damage);
                 animator.speed = 1;
                 animator.SetTrigger("Attack");
+                attackSounds?.PlayAttackSound();
             }
         }
         else
@@ -194,7 +198,7 @@ public class NPC : MonoBehaviour, IDamageable
             // death
         }
         
-        // ?°ë?ì§€ ?¨ê³¼
+        // ?ï¿½ï¿½?ì§€ ?ï¿½ê³¼
         StartCoroutine(DamageFlash());
     }
 
