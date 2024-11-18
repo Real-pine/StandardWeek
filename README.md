@@ -1,5 +1,8 @@
 # StandardWeek
- 
+ <details>
+<summary>지난 주차들 문제</summary>
+<div markdown="1">
+
 ## Q1
 **[요구사항 1]**
 
@@ -144,4 +147,9 @@ UI나 애니메이션에서 부드러운 변화를 주고 싶을 때 Mathf.Appro
 - 새로운 종류의 조명을 추가해 게임효과를 더해보세요.
 
   
+
+
+
+</div>
+</details>
 
