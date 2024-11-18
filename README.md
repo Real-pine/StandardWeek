@@ -148,8 +148,110 @@ UI나 애니메이션에서 부드러운 변화를 주고 싶을 때 Mathf.Appro
 
   
 
+</div>
+</details>
 
+
+
+<details>
+<summary>이번 주차 문제</summary>
+<div markdown="1">
+
+### Q1. 19강 UI 만들기
+
+**확인 문제 : 강의를 듣고, 강의 내용을 다시 점검하는 문제를 풀어봅시다.**
+
+<aside>
+🧠 UI의 앵커와 피벗에 대해서 세팅하는 19강의 강의 자료를 다시 확인해보시고, 
+아래 퀴즈를 풀어보세요!
+
+</aside>
+
+**[🅾️❎퀴즈]**
+
+- 앵커와 피벗은 같은 기능을 한다. (O/X)
+  X
+  피벗(Pivot)을 중심으로 회전, 크기, 스케일의 수정이 발생한다. UI요소값들의 기준점이 되는 부분이다.
+  앵커(Anchor)는 UI요소가 부모 객체(혹은 캔버스)에 대해 어떻게 배치되고 크기가 조정될지 정의하는 기준점이다.
+  
+- 피벗을 왼쪽 상단으로 설정하면, UI 요소는 화면의 왼쪽 상단을 기준으로 위치가 고정된다. (O/X)
+
+  X 앵커를 왼쪽 상단으로 설정해야 왼쪽 상단 기준으로 위치가 고정된다.
+
+- 피벗을 UI 요소의 중심에 설정하면, 회전 시 UI 요소가 중심을 기준으로 회전한다. (O/X)
+
+  O 피벗은 회전, 크기, 스케일 변경의 기준점입니다.
+
+**[**🤔 **생각해보기]**
+
+- 게임의 상단바와 같이 화면에 특정 영역에 꽉 차게 구성되는 UI와 화면의 특정 영역에 특정한 크기로 등장하는 UI의 앵커 구성이 어떻게 다른 지 설명해보세요.
+  - 특정 영역에 꽉 차게 구성되는 UI: 앵커 코너가 특정 영역끝에 설정되어 화면 비율이 변경되어도 그에 맞게 UI크기가 꽉차도록 변할 것입니다.
+  - 화면의 특정 영역에 특정한 크기로 등장하는 UI: 앵커 코너들이 특정영역에 설정되어 있어 어떤 방식으로 화면비율, 크기가 바뀌어도 특정영역에 UI가 일정크기를 유지하도록 설정되어 있을 것입니다.
+   
+- 돌아다니는 몬스터의 HP 바와 늘 고정되어있는 플레이어의 HP바는 Canvas 컴포넌트의 어떤 설정이 달라질 지 생각해보세요.
+  - 몬스터의 HP바의 캔버스는 Render Mode가 WorldSpace로 설정되어 몬스터를 따라다니며 렌더링 될 것입니다. 또한 항상 HP바가 플레이어가 볼 수 있게끔 UI가 카메라를 바라보도록 따로 스크립트를 통한 설정이 일어나야합니다.
+  또한 캔버스가 너무 커지거나 작아지는 문제를 방지하기위해 Canvas Scaler를 적절히 설정해야 합니다.
+  - 플레이어의 HP바의 캔버스는 Rendr Mode가 Overlay나 (카메라효과를 위한)Camera로 설정하여 상시 화면 상에 고정되어 렌더링 되도록 설정되어 있을 것입니다. 
+  
+
+**확장 문제 : 강의 내용을 바탕으로 새로운 기능을 추가 구현해봅시다.**
+
+<aside>
+⏱️ 게임이 길어지니 힘이 듭니다. 게임을 일시정지하는 버튼을 만들어봅시다.
+
+</aside>
+
+Resume Game이라는 텍스트가 들어있는 버튼을 만들고, 그 버튼을 누르면 게임이 재개되게 하세요.
+
+```cs
+// 답안 내역
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Pause : MonoBehaviour
+{
+    [SerializeField] private Button resumeBtn;
+    private TextMeshProUGUI _resumeText;
+    private bool isPaused = false;
+
+    private void Awake()
+    {
+        InitializeResumeBtn();
+    }
+
+    private void Update()
+    {
+        PauseGame();
+    }
+
+    private void InitializeResumeBtn()
+    {
+        resumeBtn.onClick.AddListener(ResumeGame);
+        _resumeText = transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        resumeBtn.gameObject.SetActive(false);
+        _resumeText.text = "ResumeButton";
+    }
+
+    private void PauseGame()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape) && !isPaused)
+        {
+            Time.timeScale = 0f;
+            resumeBtn.gameObject.SetActive(true);
+            isPaused = true;
+        }
+    }
+    private void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        resumeBtn.gameObject.SetActive(false);
+        isPaused = false;
+    }
+}
+```
 
 </div>
 </details>
+
 
